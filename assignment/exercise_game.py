@@ -6,9 +6,11 @@ from machine import Pin
 import time
 import random
 import json
+from google.cloud import storage
 
 
-N: int = 3
+
+N: int = 10
 sample_ms = 10.0
 on_ms = 500
 
@@ -59,11 +61,10 @@ def scorer(t: list[int | None]) -> None:
     # is in range [0..1]
     data = {}
     if t_good:
-        t_good['max_response'] = max(t_good)
-        t_good['min_response'] = min(t_good)
-        t_good['avg_response'] = sum(t_good)/len(t_good)
-    t_good['score'] = len(t_good)/len(t)
-    
+        data['max_response'] = max(t_good)
+        data['min_response'] = min(t_good)
+        data['avg_response'] = sum(t_good)/len(t_good)
+    data['score'] = len(t_good)/len(t)
     # %% make dynamic filename and write JSON
 
     now: tuple[int] = time.localtime()
@@ -75,12 +76,16 @@ def scorer(t: list[int | None]) -> None:
 
     write_json(filename, data)
 
-
+    storage_client = storage.Client()
+    bucket = storage_client.bucket("trial_results")
+    blob = bucket.blob(filename)
+    blob.upload_from_filename(filename)
+    
 if __name__ == "__main__":
     # using "if __name__" allows us to reuse functions in other script files
 
     led = Pin("LED", Pin.OUT)
-    button = Pin(16, Pin.IN, Pin.PULL_UP)
+    button = Pin(28, Pin.IN, Pin.PULL_UP)
 
     t: list[int | None] = []
 
