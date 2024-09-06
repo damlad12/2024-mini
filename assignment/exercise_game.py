@@ -6,9 +6,7 @@ from machine import Pin
 import time
 import random
 import json
-from google.cloud import storage
-
-
+import urequests
 
 N: int = 10
 sample_ms = 10.0
@@ -76,16 +74,13 @@ def scorer(t: list[int | None]) -> None:
 
     write_json(filename, data)
 
-    storage_client = storage.Client()
-    bucket = storage_client.bucket("trial_results")
-    blob = bucket.blob(filename)
-    blob.upload_from_filename(filename)
+
     
 if __name__ == "__main__":
     # using "if __name__" allows us to reuse functions in other script files
 
     led = Pin("LED", Pin.OUT)
-    button = Pin(28, Pin.IN, Pin.PULL_UP)
+    button = Pin(16, Pin.IN, Pin.PULL_UP)
 
     t: list[int | None] = []
 
