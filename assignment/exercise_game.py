@@ -13,23 +13,42 @@ on_ms = 500
 ssid = input("Enter your Wi-Fi SSID: ")
 wifi_password = input("Enter your Wi-Fi password: ")
 #firebase_api_key = "AIzaSyAlfonCarFCUA3u0AZTw5CEJuAPxciEM9U"
-#email = input("Enter your Firebase email: ")
-#firebase_password = input("Enter your Firebase password: ")
-database = "https://miniproject-team31-default-rtdb.firebaseio.com/scores.json"
+email = input("Enter your Firebase email: ")
+firebase_password = input("Enter your Firebase password: ")
+database = "https://miniproject-team31-default-rtdb.firebaseio.com"
 
 
 wlan = network.WLAN(network.STA_IF)
 wlan.active(True)
 wlan.connect(ssid, wifi_password)
-
 if wlan.isconnected():
     print("Connected to Wi-Fi")
+    
+config = {
+  "apiKey": "AIzaSyAlfonCarFCUA3u0AZTw5CEJuAPxciEM9U",
+  "authDomain": "miniproject-team31.firebaseapp.com",
+  "databaseURL": "https://miniproject-team31-default-rtdb.firebaseio.com",
+  "projectId": "miniproject-team31",
+  "storageBucket": "miniproject-team31.appspot.com",
+  "messagingSenderId": "40088517333",
+  "appId": "1:40088517333:web:c01279ac6235ab1208805c",
+  "measurementId": "G-1H067P6ZPT"
+}
 
+
+api_key = config["apiKey"]
+login_url = f"https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key={api_key}"
+payload = {"email": email, "password": firebase_password, "returnSecureToken": True}
+response = urequests.post(login_url, data=json.dumps(payload))
+print(f"Response code: {response.status_code}")
+print(f"Response content: {response.text}")
+if response.status_code == 200:
+    id_token = response.json()['idToken']  
+    uid = response.json()['localId']
 
 def random_time_interval(tmin: float, tmax: float) -> float:
     """return a random time interval between max and min"""
     return random.uniform(tmin, tmax)
-
 
 def blinker(N: int, led: Pin) -> None:
     for _ in range(N):
@@ -69,11 +88,14 @@ def scorer(t: list[int | None]) -> None:
 
     print("write", filename)
     write_json(filename, data)
-    headers = {'Content-Type': 'application/json'}
+   
     with open(filename, 'r') as file:
         json_data = file.read()
+        
     # Upload to Firebase Storage
-    response = urequests.post(database, data=json_data, headers=headers)
+    database_url = f"{database}/users/{uid}.json?auth={id_token}"
+    headers = {"Content-Type": "application/json"}
+    response = urequests.post(database_url, data=json_data, headers = headers)
     print(f"Response code: {response.status_code}")
     print(f"Response content: {response.text}")
     response.close()
